@@ -1,131 +1,164 @@
-/**
- * Sample React Native App
- * https://github.com/facebook/react-native
- *
- * @format
- */
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
+import {NavigationContainer} from '@react-navigation/native';
+import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import React, {useEffect, useState} from 'react';
+import {Dimensions, Image, StyleSheet} from 'react-native';
+import LoadingOverlay from './src/components/LoadingOverlay';
+import LoginScreen from './src/screens/Auth/LoginScreen';
+import BookingScreen from './src/screens/Main/BookingScreen';
+import HomeScreen from './src/screens/Main/HomeScreen';
+import AccountScreen from './src/screens/Main/AccountScreen';
+import EventDetailsScreen from './src/screens/Main/EventDetailsScreen';
+import SeatSelectionScreen from './src/screens/Main/SeactSelectionScreen';
 
-import React from 'react';
-import type {PropsWithChildren} from 'react';
-import {
-  ScrollView,
-  StatusBar,
-  StyleSheet,
-  Text,
-  useColorScheme,
-  View,
-} from 'react-native';
+const Stack = createNativeStackNavigator();
+const Tab = createBottomTabNavigator();
+const {width} = Dimensions.get('window');
 
-import {
-  Colors,
-  DebugInstructions,
-  Header,
-  LearnMoreLinks,
-  ReloadInstructions,
-} from 'react-native/Libraries/NewAppScreen';
+const styles = StyleSheet.create({
+  backIcon: {
+    width: width * 0.06,
+    height: width * 0.06,
+  },
+});
 
-type SectionProps = PropsWithChildren<{
-  title: string;
-}>;
+const HomeTabIcon = ({focused, color}: {focused: boolean; color: string}) => (
+  <Image
+    source={require('./assets/icons/home.png')}
+    style={[styles.backIcon, focused ? {tintColor: color} : {}]}
+  />
+);
 
-function Section({children, title}: SectionProps): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+const PopularTabIcon = ({
+  focused,
+  color,
+}: {
+  focused: boolean;
+  color: string;
+}) => (
+  <Image
+    source={require('./assets/icons/appointment.png')}
+    style={[styles.backIcon, focused ? {tintColor: color} : {}]}
+  />
+);
+
+const ChatTabIcon = ({focused, color}: {focused: boolean; color: string}) => (
+  <Image
+    source={require('./assets/icons/magnifying-glass.png')}
+    style={[styles.backIcon, focused ? {tintColor: color} : {}]}
+  />
+);
+
+const WishlistTabIcon = ({
+  focused,
+  color,
+}: {
+  focused: boolean;
+  color: string;
+}) => (
+  <Image
+    source={require('./assets/icons/heart.png')}
+    style={[styles.backIcon, focused ? {tintColor: color} : {}]}
+  />
+);
+
+const ProfileTabIcon = ({
+  focused,
+  color,
+}: {
+  focused: boolean;
+  color: string;
+}) => (
+  <Image
+    source={require('./assets/icons/account.png')}
+    style={[styles.backIcon, focused ? {tintColor: color} : {}]}
+  />
+);
+
+function MyTabs() {
   return (
-    <View style={styles.sectionContainer}>
-      <Text
-        style={[
-          styles.sectionTitle,
-          {
-            color: isDarkMode ? Colors.white : Colors.black,
-          },
-        ]}>
-        {title}
-      </Text>
-      <Text
-        style={[
-          styles.sectionDescription,
-          {
-            color: isDarkMode ? Colors.light : Colors.dark,
-          },
-        ]}>
-        {children}
-      </Text>
-    </View>
+    <Tab.Navigator
+      screenOptions={{
+        headerShown: false,
+        tabBarActiveTintColor: '#7E2CCF',
+        tabBarInactiveTintColor: 'gray',
+      }}>
+      <Tab.Screen
+        name="Home"
+        component={HomeScreen}
+        options={{tabBarIcon: HomeTabIcon}}
+      />
+      <Tab.Screen
+        name="Bookings"
+        component={BookingScreen}
+        options={{tabBarIcon: PopularTabIcon}}
+      />
+      <Tab.Screen
+        name="Search"
+        component={EventDetailsScreen}
+        options={{tabBarIcon: ChatTabIcon}}
+      />
+      <Tab.Screen
+        name="Wishlist"
+        component={SeatSelectionScreen}
+        options={{tabBarIcon: WishlistTabIcon}}
+      />
+      <Tab.Screen
+        name="Account"
+        component={AccountScreen}
+        options={{tabBarIcon: ProfileTabIcon}}
+      />
+    </Tab.Navigator>
   );
 }
 
 function App(): React.JSX.Element {
-  const isDarkMode = useColorScheme() === 'dark';
+  const [initialRoute, setInitialRoute] = useState('LoginScreen');
+  const [isLoading, setIsLoading] = useState(true);
 
-  const backgroundStyle = {
-    backgroundColor: isDarkMode ? Colors.darker : Colors.lighter,
-  };
+  useEffect(() => {
+    async function fetchToken() {
+      try {
+        const login = await AsyncStorage.getItem('isLoggedIn');
+        console.log('login', login);
+        if (login) {
+          setInitialRoute('AuthStack');
+        } else {
+          setInitialRoute('LoginScreen');
+        }
+      } catch (error) {
+        console.error('Error fetching token:', error);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchToken();
+  }, []);
 
-  /*
-   * To keep the template simple and small we're adding padding to prevent view
-   * from rendering under the System UI.
-   * For bigger apps the reccomendation is to use `react-native-safe-area-context`:
-   * https://github.com/AppAndFlow/react-native-safe-area-context
-   *
-   * You can read more about it here:
-   * https://github.com/react-native-community/discussions-and-proposals/discussions/827
-   */
-  const safePadding = '5%';
+  if (isLoading) {
+    return <LoadingOverlay message={'Loading..'} />;
+  }
 
   return (
-    <View style={backgroundStyle}>
-      <StatusBar
-        barStyle={isDarkMode ? 'light-content' : 'dark-content'}
-        backgroundColor={backgroundStyle.backgroundColor}
-      />
-      <ScrollView
-        style={backgroundStyle}>
-        <View style={{paddingRight: safePadding}}>
-          <Header/>
-        </View>
-        <View
-          style={{
-            backgroundColor: isDarkMode ? Colors.black : Colors.white,
-            paddingHorizontal: safePadding,
-            paddingBottom: safePadding,
-          }}>
-          <Section title="Step One">
-            Edit <Text style={styles.highlight}>App.tsx</Text> to change this
-            screen and then come back to see your edits.
-          </Section>
-          <Section title="See Your Changes">
-            <ReloadInstructions />
-          </Section>
-          <Section title="Debug">
-            <DebugInstructions />
-          </Section>
-          <Section title="Learn More">
-            Read the docs to discover what to do next:
-          </Section>
-          <LearnMoreLinks />
-        </View>
-      </ScrollView>
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator
+        initialRouteName={initialRoute}
+        screenOptions={{headerShown: false}}>
+        <Stack.Screen name="AuthStack" component={MyTabs} />
+        <Stack.Screen name="HomeScreen" component={HomeScreen} />
+        <Stack.Screen name="LoginScreen" component={LoginScreen} />
+        <Stack.Screen
+          name="EventDetailsScreen"
+          component={EventDetailsScreen}
+        />
+        <Stack.Screen
+          name="SeatSelectionScreen"
+          component={SeatSelectionScreen}
+        />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }
-
-const styles = StyleSheet.create({
-  sectionContainer: {
-    marginTop: 32,
-    paddingHorizontal: 24,
-  },
-  sectionTitle: {
-    fontSize: 24,
-    fontWeight: '600',
-  },
-  sectionDescription: {
-    marginTop: 8,
-    fontSize: 18,
-    fontWeight: '400',
-  },
-  highlight: {
-    fontWeight: '700',
-  },
-});
 
 export default App;
