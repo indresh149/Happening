@@ -1,3 +1,5 @@
+Release apk is in the release folder in above github repository.
+
 1. First Add the node modules 
 ```sh
 yarn
